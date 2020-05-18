@@ -5,23 +5,23 @@ date:   2018-01-02
 mathjax: true
 ---
 
-Linear regression predicts $y$ as linear combination of the predictors, $X$,
+Linear regression predicts $$y$$ as linear combination of the predictors, $$X$$,
 
 \begin{align}
 \hat{y} = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + ... + \beta_D X_D = X\beta .
 \end{align}
 
-The most common way in which this is done, is by assuming that $y$ follows a normal distribution with mean given by $X\beta$, and standard deviation $\sigma$.
+The most common way in which this is done, is by assuming that $$y$$ follows a normal distribution with mean given by $$X\beta$$, and standard deviation $$\sigma$$.
 
 \begin{align}
 y \sim \mathcal{N}(X\beta, \sigma),
 \end{align}
 
 A _generalised linear model_ (GLM) involves
-1. A link function, $g$, such that $\hat{y} = g^{-1}(X\beta)$ that are used to model the data.
-2. A data distribution $p(y|\hat{y})$,
+1. A link function, $$g$$, such that $$\hat{y} = g^{-1}(X\beta)$$ that are used to model the data.
+2. A data distribution $$p(y|\hat{y})$$,
 
-Just like traditional linear models have a variance parameter, a GLM may involve other parameters which we'll mention later on. Of course, linear models are a trivial special case of GLM's where the link function is the identity, $g(x) = x$, and the data distribution is the normal distribution.
+Just like traditional linear models have a variance parameter, a GLM may involve other parameters which we'll mention later on. Of course, linear models are a trivial special case of GLM's where the link function is the identity, $$g(x) = x$$, and the data distribution is the normal distribution.
 
 But chances are you've already came across a non-trivial example of a GLM: _logistic regression_. In logistic regression, the link function is the logistic function (duh...),
 
@@ -29,7 +29,7 @@ But chances are you've already came across a non-trivial example of a GLM: _logi
 \mathrm{logit}^{-1}(x) = \mathrm{logistic}(x) = \frac{1}{1 + e^{-x}}
 \end{align}
 
-and the data distribution is the Bernoulli distribution because the data $y$ is binary. So we write,
+and the data distribution is the Bernoulli distribution because the data $$y$$ is binary. So we write,
 
 \begin{align}
 y \sim \mathrm{Bernoulli}\left({\mathrm{logit}^{-1}(X\beta})\right)
@@ -39,7 +39,7 @@ y \sim \mathrm{Bernoulli}\left({\mathrm{logit}^{-1}(X\beta})\right)
 The need for a GLM appears, for example, when we try to model data on _counts_. Count data will always be integer-valued and positive, so if we use traditional linear regression, and therefore assume that the data follows a normal distribution, we are already doing something wrong since the normal distribution can take any real value.
 
 In this series, you'll learn about 3 different GLMs:
-1. __Poisson model__. This is used to model count data, where each data point can equal $0, 1, 2, ...$. 
+1. __Poisson model__. This is used to model count data, where each data point can equal $$0, 1, 2, ...$$. 
 2. __Logistic-binomial model___. This is used to model data where each point counts the number of successes out of a number of trials (the number of trials need not to be the same for each observation).
 3. __Robust regression model__. Here, the usual normal distribution in a traditional linear regression is replaced with a student-t distribution. This allows for smooth handling of ocassional outliers.
 
