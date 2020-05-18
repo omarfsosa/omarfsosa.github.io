@@ -5,7 +5,7 @@ date:   2020-05-18
 mathjax: true
 ---
 
-# Generalised linear models
+# Chapter 6: Generalised linear models
 
 Linear regression predicts $$y$$ as linear combination of the predictors,
 
