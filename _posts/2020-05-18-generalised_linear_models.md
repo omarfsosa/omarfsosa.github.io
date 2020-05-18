@@ -19,7 +19,7 @@ y \sim \mathcal{N}(X\beta, \sigma),
 
 A _generalised linear model_ (GLM) involves
 1. A link function, $$g$$, such that $$\hat{y} = g^{-1}(X\beta)$$ that are used to model the data.
-2. A data distribution $$p(y|\hat{y})$$,
+2. A data distribution $$p(y\mid\hat{y})$$,
 
 Just like traditional linear models have a variance parameter, a GLM may involve other parameters which we'll mention later on. Of course, linear models are a trivial special case of GLM's where the link function is the identity, $$g(x) = x$$, and the data distribution is the normal distribution.
 
