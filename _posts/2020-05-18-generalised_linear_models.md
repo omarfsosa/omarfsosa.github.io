@@ -71,7 +71,7 @@ plt.show()
   </div>
   
 
-![png](police_stops_files/police_stops_4_0.png)
+![png](/images/blog-images/2020-05-18-generalised_linear_models/police_stops_4_0.png)
 
 
 ## Poisson regression, exposure and overdispersion
@@ -301,7 +301,7 @@ plt.show()
   </div>
   
 
-![png](police_stops_files/police_stops_14_0.png)
+![png](/images/blog-images/2020-05-18-generalised_linear_models/police_stops_14_0.png)
 
 
 
@@ -340,7 +340,7 @@ plt.show()
   </div>
   
 
-![png](police_stops_files/police_stops_15_0.png)
+![png](/images/blog-images/2020-05-18-generalised_linear_models/police_stops_15_0.png)
 
 
 The standardised residuals are already stored in the fitted model in the attribute `resid_pearson`, so we don't need to compute these by hand.
