@@ -1,13 +1,10 @@
----
-layout: single
-title:  "Chapter 6: Generalised linear models"
-date:   2020-05-18
-mathjax: true
----
-Linear regression predicts $$y$$ as linear combination of the predictors, $$X$$,
+
+# Generalised linear models
+
+Linear regression predicts $$y$$ as linear combination of the predictors,
 
 $$
-y \sim X\beta = \beta_0 + X_1\beta_1 + X_2\beta_2 + ...
+y ~ X\beta = \beta_0 + X_1\beta_1 + X_2\beta_2 + ...
 $$
 
 
@@ -58,6 +55,10 @@ model_no_indicators = sm.GLM(
 result_no_indicators = model_no_indicators.fit()
 result_no_indicators.summary()
 ```
+
+  </div>
+  
+
 
 
   <div markdown="0">
