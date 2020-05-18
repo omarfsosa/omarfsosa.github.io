@@ -5,16 +5,19 @@ date:   2020-05-18
 mathjax: true
 ---
 
-
 # Generalised linear models
+
+Linear regression predicts $$y$$ as linear combination of the predictors,
+
+$$
+y ~ X\beta = \beta_0 + X_1\beta_1 + X_2\beta_2 + ...
+$$
+
 
 
   <div class="input_area" markdown="1">
   
 ```python
-%matplotlib inline
-%config InlineBackend.figure_format = 'retina'
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -31,56 +34,11 @@ import scipy.stats
 df = pd.read_csv("../datasets/frisks.csv")
 ```
 
-  </div>
-  
-
-  <div class="input_area" markdown="1">
-  
-```python
-df2 = (df
-    .groupby(['eth', 'precinct'])[["stops", "past_arrests"]]
-    .sum()
-    .reset_index()
-    .pipe(pd.get_dummies, columns=['eth', 'precinct'])
-    .assign(intercept=1)
-    .sort_values(by='stops')
-    .reset_index(drop=True)
-)
-```
-
-  </div>
-  
-
-  <div class="input_area" markdown="1">
-  
-```python
-f, axes = plt.subplots(1, 2, figsize=(18, 6))
-axes[0].hist(df2.stops)
-axes[0].set_xlabel("Stops")
-axes[0].set_ylabel("Count")
-axes[1].plot(df2.loc[df2.eth_1 == 1].past_arrests, df2.loc[df2.eth_1 == 1].stops, 'o', label="Black")
-axes[1].plot(df2.loc[df2.eth_2 == 1].past_arrests, df2.loc[df2.eth_2 == 1].stops, 'o', label="Hispanic")
-axes[1].plot(df2.loc[df2.eth_3 == 1].past_arrests, df2.loc[df2.eth_3 == 1].stops, 'o', label="White")
-axes[1].set_xlabel("Stops", fontsize=14)
-axes[1].set_ylabel("Past arrests", fontsize=14)
-# plt.rc('font', size=14)
-plt.legend(frameon=False)
-plt.show()
-```
-
-  </div>
-  
-
 ![png](/assets/images/blog-images/2020-05-18-generalised_linear_models/police_stops_4_0.png)
 
-
+  </div>
+  
 ## Poisson regression, exposure and overdispersion
-
-This is just a test equation place holder 
-
-$$
-\kappa(x_{i+1}\mid x_i) = \mathrm{min}\left(1, \frac{\pi(x_{i+1})q(x_i\mid x_{i+1})}{\pi(x_{i})q(x_{i+1}\mid x_{i})}\right) = \mathrm{min}(1, H),
-$$
 
 
   <div class="input_area" markdown="1">
@@ -227,6 +185,7 @@ result_with_ethnicity.summary()
   </div>
   
 
+![png](/assets/images/blog-images/2020-05-18-generalised_linear_models/police_stops_14_0.png)
 
 
   <div class="input_area" markdown="1">
@@ -268,128 +227,6 @@ def group_residuals(y_true, y_pred, n_groups=20, offset=0):
 
   </div>
   
-
-  <div class="input_area" markdown="1">
-  
-```python
-f = plt.figure(figsize=(6 * 1.618, 6))
-plt.errorbar(
-    *group_residuals(df2.stops, result_no_indicators.fittedvalues, offset=-0.15),
-    label='No indicators',
-    marker='o',
-    linestyle=''
-)
-plt.errorbar(
-    *group_residuals(df2.stops, result_with_ethnicity.fittedvalues),
-    label='With ethnicity',
-    marker='o',
-    linestyle=''
-)
-plt.errorbar(
-    *group_residuals(df2.stops, result_with_ethnicity_and_precinct.fittedvalues, offset=0.15),
-    label='With ethnicity and precinct',
-    marker='o',
-    linestyle=''
-)
-
-plt.xlabel("Quantile", fontsize=14)
-plt.ylabel("Residual", fontsize=14)
-plt.legend(loc='upper left')
-plt.show()
-```
-
-  </div>
-  
-
-![png](/assets/images/blog-images/2020-05-18-generalised_linear_models/police_stops_14_0.png)
-
-
-
-  <div class="input_area" markdown="1">
-  
-```python
-f, axes = plt.subplots(1, 2, figsize=(18, 6))
-axes[0].plot(
-    df2.stops,
-    df2.stops - result_with_ethnicity_and_precinct.fittedvalues,
-    marker='.',
-    linestyle=''
-)
-axes[0].axhline(y=0, color='black', linewidth=0.5)
-axes[0].set_ylabel("Residual", fontsize=14)
-axes[0].set_xlabel("Stops", fontsize=14)
-
-axes[1].plot(
-    df2.stops,
-    (df2.stops - result_with_ethnicity_and_precinct.fittedvalues) / np.sqrt(result_with_ethnicity_and_precinct.fittedvalues),
-    marker='.',
-    linestyle=''
-)
-
-axes[1].axhline(y=-2, linestyle=':', color='black', label="$\pm 2\sigma$")
-axes[1].axhline(y=+2, linestyle=':', color='black',)
-axes[1].axhline(y=0, color='black', linewidth=0.5)
-axes[1].set_ylabel("Standardized Residual", fontsize=14)
-axes[1].set_xlabel("Stops", fontsize=14)
-axes[1].legend()
-
-
-plt.show()
-```
-
-  </div>
-  
-
-![png](/assets/images/blog-images/2020-05-18-generalised_linear_models/police_stops_15_0.png)
-
-
 The standardised residuals are already stored in the fitted model in the attribute `resid_pearson`, so we don't need to compute these by hand.
 
-
-  <div class="input_area" markdown="1">
-  
-```python
-z_residuals = (df2.stops - result_with_ethnicity_and_precinct.fittedvalues) / np.sqrt(result_with_ethnicity_and_precinct.fittedvalues)
-(z_residuals == result_with_ethnicity_and_precinct.resid_pearson).all()
-```
-
-  </div>
-  
-
-
-
-  {:.output_data_text}</p>
-
-<pre><code>  True</code></pre>
-<p>
-
-
-
-  <div class="input_area" markdown="1">
-  
-```python
-overdispersion_ratio = sum(result_with_ethnicity_and_precinct.resid_pearson ** 2) / result_with_ethnicity_and_precinct.df_resid
-overdispersion_test = scipy.stats.chisquare(
-    result_with_ethnicity_and_precinct.resid_pearson,
-    ddof=result_with_ethnicity_and_precinct.df_resid,
-)
-```
-
-  </div>
-  
-
-  <div class="input_area" markdown="1">
-  
-```python
-print(f"Overdispersion ratio is {overdispersion_ratio:.2f}")
-print(f"p-value of overdispersion test is {overdispersion_test.pvalue:.2f}")
-```
-
-  </div>
-  
-  {:.output_stream}</p>
-
-<pre><code>  Overdispersion ratio is 21.24
-p-value of overdispersion test is 1.00
-</code></pre>
-<p>
+![png](/assets/images/blog-images/2020-05-18-generalised_linear_models/police_stops_15_0.png)
