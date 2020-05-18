@@ -1,3 +1,9 @@
+---
+layout: single
+title:  "Generalised linear models: Part 1"
+date:   2018-01-02
+mathjax: true
+---
 
 Linear regression predicts $y$ as linear combination of the predictors, $X$,
 
