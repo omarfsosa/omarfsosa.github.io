@@ -94,8 +94,8 @@ analytics:
 # Site Author
 author:
   name             : "Omar Sosa"
-  avatar           : "/assets/images/omar.jpg"
-  bio              : "Theoretical physicist and Data Scientist, working at Faculty."
+  avatar           : "/assets/images/omar-portrait.jpg"
+  bio              : "Theoretical Physicist and Data Scientist, working at Faculty."
   location         : "London, UK"
   email            : "omarfsosa@gmail.com"
   links:

@@ -1,49 +1,20 @@
 ---
 layout: single
-title:  "Generalised linear models: Part 1"
-date:   2018-01-02
+title:  "Poisson regression in python"
+date:   2020-05-19
 mathjax: true
 ---
+You tried to model count data using linear regression and it felt wrong. Poisson regression is used to model count data, that is, data that can equal $$0, 1, 2, ... $$. Ordinary linear regression is not ideal in these scenarios. Linear regression usually assumes that the data can be described with a normal distribution, but a normal distribution is not constrained to the integers, nor it needs to be positive.
 
-Linear regression predicts $$y$$ as linear combination of the predictors, $$X$$,
-
-\begin{align}
-\hat{y} = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + ... + \beta_D X_D = X\beta .
-\end{align}
-
-The most common way in which this is done, is by assuming that $$y$$ follows a normal distribution with mean given by $$X\beta$$, and standard deviation $$\sigma$$.
+## Introduction
+In a Poisson model, each observation corresponds to a setting like a location or a time interval. For example, the number of patients, $$y$$, that arrive to a hospital on day $$i$$ -- we would label this observation as $$y_i$$. Poisson regression is an example of a generalised linear model, so, like in ordinary linear regression or like in logistic regression, we model the variation in $$y$$ with a linear predictors $$X$$.
 
 \begin{align}
-y \sim \mathcal{N}(X\beta, \sigma),
+y_i &\sim \mathrm{Poisson}(\theta_i) \newline
+\theta_i &= \exp (X_i \beta)
 \end{align}
 
-A _generalised linear model_ (GLM) involves
-1. A link function, $$g$$, such that $$\hat{y} = g^{-1}(X\beta)$$ that are used to model the data.
-2. A data distribution $$p(y\mid\hat{y})$$,
-
-Just like traditional linear models have a variance parameter, a GLM may involve other parameters which we'll mention later on. Of course, linear models are a trivial special case of GLM's where the link function is the identity, $$g(x) = x$$, and the data distribution is the normal distribution.
-
-But chances are you've already came across a non-trivial example of a GLM: _logistic regression_. In logistic regression, the link function is the logistic function (duh...),
-
-\begin{align}
-\mathrm{logit}^{-1}(x) = \mathrm{logistic}(x) = \frac{1}{1 + e^{-x}}
-\end{align}
-
-and the data distribution is the Bernoulli distribution because the data $$y$$ is binary. So we write,
-
-\begin{align}
-y \sim \mathrm{Bernoulli}\left({\mathrm{logit}^{-1}(X\beta})\right)
-\end{align}
-
-
-The need for a GLM appears, for example, when we try to model data on _counts_. Count data will always be integer-valued and positive, so if we use traditional linear regression, and therefore assume that the data follows a normal distribution, we are already doing something wrong since the normal distribution can take any real value.
-
-In this series, you'll learn about 3 different GLMs:
-1. __Poisson model__. This is used to model count data, where each data point can equal $$0, 1, 2, ...$$. 
-2. __Logistic-binomial model___. This is used to model data where each point counts the number of successes out of a number of trials (the number of trials need not to be the same for each observation).
-3. __Robust regression model__. Here, the usual normal distribution in a traditional linear regression is replaced with a student-t distribution. This allows for smooth handling of ocassional outliers.
-
-
+Let's see how to fit a Poisson regression using Python (if you prefer R, you came to the wrong neighborhood). Fire up your jupyter server and follow along. Start by importing the necessary libraries and the raw data.
 
 
   <div class="input_area" markdown="1">
@@ -54,19 +25,104 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 import scipy.stats
-```
 
-  </div>
-  
-
-  <div class="input_area" markdown="1">
-  
-```python
 df = pd.read_csv("../datasets/frisks.csv")
+df.head()
 ```
+</div>
 
+You should se a table like this:
+
+<div markdown="0" style="text-align: right">
+  <table class="simpletable">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>stops</th>
+      <th>pop</th>
+      <th>past_arrests</th>
+      <th>precinct</th>
+      <th>eth</th>
+      <th>crime</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>75</td>
+      <td>1720</td>
+      <td>191</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>36</td>
+      <td>1720</td>
+      <td>57</td>
+      <td>1</td>
+      <td>1</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>74</td>
+      <td>1720</td>
+      <td>599</td>
+      <td>1</td>
+      <td>1</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>17</td>
+      <td>1720</td>
+      <td>133</td>
+      <td>1</td>
+      <td>1</td>
+      <td>4</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>37</td>
+      <td>1368</td>
+      <td>62</td>
+      <td>1</td>
+      <td>2</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+  </table>
+</div>
+
+## Police stops by ethnic group
+In this example,
+1. The units $$i$$ are precincts (1, 2, ..., 75) and ethnic groups (_black, hispanic_ and _white_), so $$i = 1, 2, ..., 75\times3$$.
+2. The outcome $$y_i$$ is the number of police stops of members of that ethnic group in that precinct.
+3. The exposure $$u_i$$ is the previous year's number of arrests of members of that ethnic group in that precinct.
+4. The predictors are: a constant term, 74 precinct indicators (precinct number 1 is used as the baseline so it will not be used as predictor), and 2 ethnicity indicators (one for hispanics and one for whites, with the indicator for blacks as the baseline).
+
+
+The csv that we loaded is not quite in the format we need it
+
+  <div class="input_area" markdown="1">  
+```python
+X = (df
+    .groupby(['eth', 'precinct'])[["stops", "past_arrests"]]
+    .sum()
+    .reset_index()
+    .pipe(pd.get_dummies, columns=['eth', 'precinct'])
+    .assign(intercept=1)
+    .sort_values(by='stops')
+    .reset_index(drop=True)
+)
+
+y = X.pop("stops")
+```
   </div>
-  
+
+
 ## Poisson regression, exposure and overdispersion
 
 
