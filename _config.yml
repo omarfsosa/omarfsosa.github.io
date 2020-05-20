@@ -181,6 +181,8 @@ markdown_ext: "markdown,mkdown,mkdn,mkd,md"
 
 # Conversion
 markdown: kramdown
+redcarpet:
+  extensions: ["strikethrough"]
 highlighter: rouge
 lsi: false
 excerpt_separator: "\n\n"
