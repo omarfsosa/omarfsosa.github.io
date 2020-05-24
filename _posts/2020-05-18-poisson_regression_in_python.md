@@ -357,7 +357,7 @@ R = \frac{1}{n - k}\sum_{i=1}^n z_i^2,
 
 where $$n-k$$ are the degrees of freedom of the residuals ($$n$$ is the number of observations and $$k$$ is the number of parameters you used to fit the model). If the data were Poisson, the sum of squares of the standardised residuals would follow a chi-square distribution with $$n-k$$ degrees of freedom, so we would expect $$R\approx 1$$. When $$R > 0$$, we say the data is overdispersed because there is extra variation in the data which is not captured by the Poisson model. When $$R < 1$$, we say the data is under-dispersed and we make sure to tell all of our friends about it because this is such a rare pokémon to find.
 
-Ok, so how do we account for overdispersion? There's more than one way to do it but, in any case, we are going to need an extra parameter in our model (just like a normal distribution has a parameter for the mean and one for the variance). Here, I'll do int using a negative binomial distribution instead of a Poisson. If $$y\sim \mathrm{NegBinomial}(\mu, \alpha)$$, then, according the parametrisation used by statsmodels library,
+Ok, so how do we account for overdispersion? There's more than one way to do it but, in any case, we are going to need an extra parameter in our model (just like a normal distribution has a parameter for the mean and one for the variance). Here, I'll do it using a negative binomial distribution instead of a Poisson. If $$y\sim \mathrm{NegBinomial}(\mu, \alpha)$$, then, according the parametrisation used by statsmodels library,
 
 \begin{align}
 \mathrm{E}\left[y\right] &= \mu \newline
