@@ -6,7 +6,7 @@ mathjax: true
 ---
 You tried to model count data using linear regression and it felt wrong. All your observations are integers and yet your model assumed continuous data. Noise seems to be larger when your observations take large values, but your model assumed the same amount of variance all across the board. Even worse, when your observations take small values, sometimes your model predicted negative values! So when no one else was watching you truncated your predictions at zero, `y_pred = max(0, y_pred)`. You have not slept since then.
 
-Finally, you realise: you need to model your data using a Poisson distribution! After <s>watchhing a couple of YouTube videos</s> doing some thorough research, you find that every single tutorial and reference out there uses R instead of Python. You're now considering installing RStudio -- but maybe not, since you have a deadline ahead of you and learning a new programming language is not going to happen in one day. Stress is kicking in.
+Finally, you realise: you need to model your data using a Poisson distribution! After <s>watching a couple of YouTube videos</s> doing some thorough research, you find that every single tutorial and reference out there uses R instead of Python. You're now considering installing RStudio -- but maybe not, since you have a deadline ahead of you and learning a new programming language is not going to happen in one day. Stress is kicking in.
 
 Fear not. Here you will learn how to do Poisson regression, and all within the comfort of your beloved Python.
 I'll show you how to model the same example that is treated in chapter 6 of [this book](http://www.stat.columbia.edu/~gelman/arm/)[^1]. But, yes, we'll do it in Python. So fire up a Jupyter notebook and follow along.
@@ -27,7 +27,7 @@ df = pd.read_csv(url, skiprows=6, delimiter=" ")
 df.head()
 ```
 
-You should se a table like this:
+You should see a table like this:
   <div markdown="0" style="text-align: right">
     <table class="simpletable">
       <thead>
@@ -103,7 +103,7 @@ Here's a quick description of the data.
 
 [^2]: Andrew Gelman, Jeffrey Fagan & Alex Kiss (2007) An Analysis of the New York City Police Department's “Stop-and-Frisk” Policy in the Context of Claims of Racial Bias, Journal of the American Statistical Association, 102:479, 813-823, DOI: 10.1198/016214506000001040
 
-In a Poisson model, each observation corresponds to a setting like a location or a time interval. In this example, the setting is precinct and ethnicity -- we index these with the letter $$i$$. The response variable that we want to model, $$y$$, is the number of police stops. Poisson regression is an example of a generalised linear model, so, like in ordinary linear regression or like in logistic regression, we model the variation in $$y$$ with linear predictors $$X$$.
+In a Poisson model, each observation corresponds to a setting like a location or a time interval. In this example, the setting is precinct and ethnicity -- we index these with the letter $$i$$. The response variable that we want to model, $$y$$, is the number of police stops. Poisson regression is an example of a generalised linear model, so, like in ordinary linear regression or like in logistic regression, we model the variation in $$y$$ with some linear combination of predictors, $$X$$.
 
 \begin{align}
 y_i &\sim \mathrm{Poisson}(\theta_i) \newline
@@ -136,9 +136,7 @@ y = X.pop("stops")
 ```
 </div>
 
-Pretty neat, huh? I learned the above "trick" from a colleague, who in turn says he learned it from [this](https://tomaugspurger.github.io/method-chaining.html) blog[^3]. Every processing step takes place in a separate line which makes it easier to read, and your code is not cluttered with multiple assignments to `X`. We added the column `intercept` because we will need to pass that explicitly to the `statsmodels.api` (this step would not be necessary if we were using the `statsmodels.formula.api` instead, but I'll not do that here).
-
-[^3]: https://tomaugspurger.github.io/method-chaining.html
+Pretty neat, huh? I learned the above "trick" from a colleague, who in turn says he learned it from [this blog](https://tomaugspurger.github.io/method-chaining.html). Every processing step takes place in a separate line which makes it easier to read, and your code is not cluttered with multiple assignments to `X`. We added the column `intercept` because we will need to pass that explicitly to the `statsmodels.api` (this step would not be necessary if we were using the `statsmodels.formula.api` instead, but I'll not do that here).
 
 ## Poisson regression
 
@@ -148,7 +146,7 @@ First we fit the model without any predictors,
 y_i \sim \mathrm{Poisson}(\exp (\beta_0 + \log(u_i))).
 \end{align}
 
-If you are familiar with _sklearn_, pay attention to how the model here is fitted: the `fit` method does not operate in place but rather returns a new object storing the results.
+If you are familiar with _scikit-learn_, pay attention to how the model here is fitted: the `fit` method does not operate in place but rather returns a new object storing the results.
 <div class="input_area" markdown="1">
 
 ```python
@@ -205,7 +203,7 @@ Hmmmm... Perhaps not as bad as I would've expected for a 1 parameter model. Stil
 
 ### Ethnicity and precinct as predictors
 
-We built on top of the previous model by first adding the ethnicity indicators. Note that we don't add the ethnicity indicator for black (1) because we use it as the baseline.
+We build on top of the previous model by first adding the ethnicity indicators. Note that we don't add the ethnicity indicator for black (1) because we use it as the baseline.
 
 ```python
 model_with_ethnicity = sm.GLM(
@@ -325,10 +323,11 @@ As you might have noticed, the Poisson distribution does not have independent pa
 \mathrm{Var}\left[y\right] &= \lambda
 \end{align}
 
-This means that you can easily evaluate if your data is Poisson or not. You already know that the residuals of your fit should have mean equal to zero. In a Poisson model, you can go a bit further and look at the _standardized residuals_,
+This means that you can easily evaluate if your data is Poisson or not. You already know that the residuals of your fit should have mean equal to zero. We can go a bit further and look at the _standardized residuals_,
 
 \begin{align}
-z_i = \frac{y_i - \hat{y}_i}{\sqrt{\hat{y}_i}},
+z_i & = \frac{y_i - \mu}{\sigma}\newline
+  & = \frac{y_i - \hat{y}_i}{\sqrt{\hat{y}_i}} \quad \mathrm{(For\ a\ Poisson\ model)}
 \end{align}
 
 which not only should have mean at zero, but also standard deviation equal to $$1$$. The result of statsmodels conveniently stores the values of the residuals and standardized residuals in the attributes `resid_response` and `resid_pearson`, so this makes our life a bit simpler:
@@ -354,18 +353,16 @@ From the left plot, we see that the variance increases with the fitted values --
 R = \frac{1}{n - k}\sum_{i=1}^n z_i^2,
 \end{align}
 
-where $$n-k$$ are the degrees of freedom of the residuals. If the data were Poisson, the sum of squares of the standardised residuals would follow a chi-square distribution with $$n-k$$ degrees of freedom, so we would expect $$R\approx 1$$. When $$R > 0$$, we say the data is overdispersed because there is extra variation in the data which is not captured by the Poisson model. When $$R < 1$$, we say the data is under-dispersed and we make sure to tell all of our friends about it because this is such a rare pokemon to find.
+where $$n-k$$ are the degrees of freedom of the residuals ($$n$$ is the number of observations and $$k$$ is the number of parameters you used to fit the model). If the data were Poisson, the sum of squares of the standardised residuals would follow a chi-square distribution with $$n-k$$ degrees of freedom, so we would expect $$R\approx 1$$. When $$R > 0$$, we say the data is overdispersed because there is extra variation in the data which is not captured by the Poisson model. When $$R < 1$$, we say the data is under-dispersed and we make sure to tell all of our friends about it because this is such a rare pokémon to find.
 
-Ok, so how do we account for overdispersion? We use a negative binomial distribution, which has 2 parameters, instead of a Poisson. If $$y\sim \mathrm{NegBinomial}(\mu, \alpha)$$, then, according the paramtrisation used by statsmodel library,
+Ok, so how do we account for overdispersion? There's more than one way to do it but, in any case, we are going to need an extra parameter in our model (just like a normal distribution has a parameter for the mean and one for the variance). Here, I'll do int using a negative binomial distribution instead of a Poisson. If $$y\sim \mathrm{NegBinomial}(\mu, \alpha)$$, then, according the parametrisation used by statsmodels library,
 
 \begin{align}
 \mathrm{E}\left[y\right] &= \mu \newline
-\mathrm{Var}\left[y\right] &= \mu + \alpha\mu^2 .
+\mathrm{Var}\left[y\right] &= \mu + \alpha\mu^2.
 \end{align}
 
-[^5]: See this good set of notes for more details: https://data.princeton.edu/wws509/notes/c4a.pdf .
-
-So we simply fit a negative binomial model with a bit of overdisperssion, say $$\alpha=0.051$$, (below I explain how to choose this number):
+The parameter alpha is what helps us to specify the amount of overdispersion. So we simply fit a negative binomial model with a bit of overdisperssion, say $$\alpha=0.051$$, (below I explain how to choose this number):
 
 ```python
 alpha = 0.051
