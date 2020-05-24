@@ -20,15 +20,15 @@ title                    : "Omar Sosa"
 title_separator          : "-"
 subtitle                 : # site tagline that appears below site title in masthead
 name                     : "Omar Sosa Rodriguez"
-description              : "An amazing website indeed."
-url                      : # the base hostname & protocol for your site e.g. "https://mmistakes.github.io"
+description              : "Omar's blog on data science and machine learning."
+url                      : "https://omarfsosa.github.io" # the base hostname & protocol for your site e.g. "https://mmistakes.github.io"
 baseurl                  : # the subpath of your site, e.g. "/blog"
-repository               : # GitHub username/repo-name e.g. "mmistakes/minimal-mistakes"
+repository               : "omarfsosa/omarfsosa.github.io" # GitHub username/repo-name e.g. "mmistakes/minimal-mistakes"
 teaser                   : # path of fallback teaser image, e.g. "/assets/images/500x300.png"
 logo                     : # path of logo image to display in the masthead, e.g. "/assets/images/88x88.png"
 masthead_title           : # overrides the website title displayed in the masthead, use " " for no title
 # breadcrumbs            : false # true, false (default)
-words_per_minute         : 200
+words_per_minute         : 180
 comments:
   provider               : # false (default), "disqus", "discourse", "facebook", "staticman", "staticman_v2", "utterances", "custom"
   disqus:
@@ -63,7 +63,7 @@ google:
   search_engine_id       : # YOUR_SEARCH_ENGINE_ID
   instant_search         : # false (default), true
 # SEO Related
-google_site_verification :
+google_site_verification : "TI2nKeC3WbOgRnCVp6-WX_DTneslIvLhBrO_VTMJY7c"
 bing_site_verification   :
 yandex_site_verification :
 naver_site_verification  :

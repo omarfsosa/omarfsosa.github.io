@@ -1,8 +1,10 @@
 ---
 layout: single
 title:  "Poisson regression in python"
+description: "A simple example on how to do Poisson regression using Python."
 date:   2020-05-19
 mathjax: true
+tags: [poisson regression, python, statistics]
 ---
 You tried to model count data using linear regression and it felt wrong. All your observations are integers and yet your model assumed continuous data. Noise seems to be larger when your observations take large values, but your model assumed the same amount of variance all across the board. Even worse, when your observations take small values, sometimes your model predicted negative values! So when no one else was watching you truncated your predictions at zero, `y_pred = max(0, y_pred)`. You have not slept since then.
 
