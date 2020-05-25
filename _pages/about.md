@@ -3,7 +3,7 @@ layout: single
 title:  "About Me"
 permalink: /about/
 ---
-I'm yet another jaded theoretical physiscist that sold his soul to the data science industry in exchange for a stable mental heatlh.
+I'm yet another jaded theoretical physiscist that sold his soul to the data science industry in exchange for a stable lifestyle.
 
 I started working at Faculty on January 2019, after having done a short project for Rolls Royce Motor Cars as part of the _Faculty Fellowship XII_. You can see my final presentation on [this link](https://www.youtube.com/watch?v=WjV2XPZj4JA&t=100s). The kind of work I enjoy doing is closer to statistics than to deep learning stuff. But saying I do statistics tends to be such a mood killer that I prefer to call myself a Data Scientist. If I'm feeling wild, sometimes I'll even say I do _A. I._.
 
