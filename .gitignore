@@ -31,3 +31,4 @@ _site
 # Custom
 datasets/
 *checkpoint.ipynb
+plan.md
