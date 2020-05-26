@@ -110,9 +110,11 @@ In a Poisson model, each observation corresponds to a setting like a location or
 \begin{align}
 y_i &\sim \mathrm{Poisson}(\theta_i) \newline
 \theta_i &= \exp (X_i \beta) \newline
-X_i\beta &= \beta_0 + X_{i,1}\beta_1 + X_{i,2}\beta_2 + ... + X_{i,D}\beta_D .
+X_i\beta &= \beta_0 + X_{i,1}\beta_1 + X_{i,2}\beta_2 + ... + X_{i,k}\beta_k .
 \end{align}
-My notation implicitly assumes that $$X_{i, 0} = 1$$ for all observations, just so that I don't have to write the intercept term separately. While the model above would work just fine, it is most common to model $$y$$ as relative to some baseline variable $$u$$. This baseline variable is also called the _exposure_. So, the model we use is written as 
+My notation implicitly assumes that $$X_{i, 0} = 1$$ for all observations, just so that I don't have to write the intercept term separately. The use of the exponential in second row is needed because the parameter passed to the Poisson distribution has to be a positive number. The linear combination $$X_i\beta$$ is not constrained to be positive, so the exponential is used a _link_ to the allowed paramters. Other choices of link functions are posible but the exponential is the standard choice when it comes to Poisson regression. 
+
+The model above would work just fine, but it is most common to model $$y$$ as relative to some baseline variable $$u$$. This baseline variable is also called the _exposure_. So, the model we use is written as 
 
 \begin{align}
 y_i \sim \mathrm{Poisson}(u_i \theta_i) = \mathrm{Poisson}(\exp (X_i \beta + \log(u_i))).
@@ -355,7 +357,12 @@ From the left plot, we see that the variance increases with the fitted values --
 R = \frac{1}{n - k}\sum_{i=1}^n z_i^2,
 \end{align}
 
-where $$n-k$$ are the degrees of freedom of the residuals ($$n$$ is the number of observations and $$k$$ is the number of parameters you used to fit the model). If the data were Poisson, the sum of squares of the standardised residuals would follow a chi-square distribution with $$n-k$$ degrees of freedom, so we would expect $$R\approx 1$$. When $$R > 0$$, we say the data is overdispersed because there is extra variation in the data which is not captured by the Poisson model. When $$R < 1$$, we say the data is under-dispersed and we make sure to tell all of our friends about it because this is such a rare pokémon to find.
+where $$n-k$$ are the degrees of freedom of the residuals ($$n$$ is the number of observations and $$k$$ is the number of parameters you used to fit the model). If the data were Poisson, the sum of squares of the standardised residuals would follow a chi-square distribution with $$n-k$$ degrees of freedom, so we would expect $$R\approx 1$$. When $$R > 0$$, we say the data is overdispersed because there is extra variation in the data which is not captured by the Poisson model. When $$R < 1$$, we say the data is under-dispersed and we make sure to tell all of our friends about it because this is such a rare pokémon to find. You can easily compute the overdispersion ratio from the result:
+
+```python
+R = result_with_ethnicity_and_precinct.pearson_chi2 / result_with_ethnicity_and_precinct.df_resid
+print(R)  # 21.88
+```
 
 Ok, so how do we account for overdispersion? There's more than one way to do it but, in any case, we are going to need an extra parameter in our model (just like a normal distribution has a parameter for the mean and one for the variance). Here, I'll do it using a negative binomial distribution instead of a Poisson. If $$y\sim \mathrm{NegBinomial}(\mu, \alpha)$$, then, according the parametrisation used by statsmodels library,
 
