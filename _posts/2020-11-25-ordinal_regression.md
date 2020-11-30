@@ -1,19 +1,28 @@
 ---
 layout: single
 title:  "A simple example of ordinal regression"
-description: "Because I'm hyped about The Queen's Gambit"
 date:   2020-11-25
 mathjax: true
 tags: [ordinal regression, stan, statistics, chess, elo]
 ---
-I binged the whole thing (because, you know, that's what we do in the times of Covid) and I was quite pleased with it. Isn't it nice when you start to watch a TV show without any expectations and it ends up being one of the best things of the year? Anyway, once Beth Harmon was out of the way, I had time to think about some chess-stats questions. In particular there were 2 scenes in this show that left me thinking (SPOILERS AHEAD!):
+The Queen's Gambit came out and I binged the whole thing because, you know, that's what we do in the times of Covid. I really enjoyed it, actually, but once Beth Harmon was out of the way, the chess-stats questions started to flow. In particular, there were 2 scenes in this show that left me thinking (SPOILERS AHEAD!):
 
-* First, when Mr. Sheibel is starting to teach Beth how to play, he always plays the white pieces. So how much does playing white increases one's probability of winning?
-* And second, when Beth goes to sign up for her first tournament but she does not have an Elo rating, the organizers give her a bit of a hard time. How good are Elo ratings anyway? Can I come up with a better rating?
+* First, when Mr. Sheibel is starting to teach Beth how to play, he always plays the white pieces. It's only after a few games that he tells Beth that she can play white pieces too. So how much does playing white increases one's probability of winning?
+* And second, when Beth goes to sign up for her first tournament, the organisers give her a bit of a hard time because she does not have an Elo rating. So, how do Elo ratings determine someone's probability of winning?
 
-No doubt there's been tons of research about these questions and I bet quick google search will suffice. But that's no fun. Instead, I've downladed a bunch of games from the [FIDE World Cups](https://theweekinchess.com/chessnews/events/fide-world-cup-2019) and I've decided to write my own model to answer my questions. Of course, FIDE world cups are far from a representative sample of an average chess game, so all results I'll show here only apply to FIDE world cup games (or perhaps other games outside the world cup but that involve players just as skilled and similar playing circumstances).
+No doubt there's been tons of research about these questions already, and I bet quick google search will suffice to get an answer. But that's no fun. Instead, I've downloaded a bunch of games from the [FIDE World Cups](https://theweekinchess.com/chessnews/events/fide-world-cup-2019) and I've decided to write my own model to answer my questions. Of course, FIDE world cups are far from a representative sample of an average chess game, so all results I'll show here only apply to FIDE world cup games (or perhaps other games outside the world cup but that involve players just as skilled and similar playing circumstances).
 
-Here's the data
+After dealing with some formatting issues, here's the data in the always-friendly csv format:
+
+```python
+import arviz
+import pandas as pd
+import stan  # PyStan 3
+
+games = pd.read_csv("../data/games.csv", parse_dates=["date"])
+games.head()
+```
+
 <div markdown="0" style="text-align: right">
     <table border="0" class="dataframe">
     <thead>
@@ -83,18 +92,27 @@ Here's the data
 
 ## Elo Based model
 
-The first thing I want to try is just an Elo based model. That is, a model that tries to predict the game outcome based on the Elo of each player. But simply saying that the player with higher Elo would win is not a good idea. Such approach would miss the fact that playing white pieces _might_ give you an edge. For example, Elo ratings are meant to be such that the probability of winning for player A is given by something like $$P_w(A) = 1 / (1 + 10^{-(E_A - E_B)/400})$$, but this formula assumes that the game is "fair" and it also ignores (I think) the possibility of a draw. If we want to take into account the possibility of an edge for player A, the least we can do is model the probability of winning as something like
+To answer my questions, I will fit a model that tries to predict the outcome of the game based on the Elo difference between the players. Of course, simply saying that the player with higher Elo would win is not good enough. Such approach would miss the fact that playing white pieces _might_ give you an edge. For example, in [this post](https://fivethirtyeight.com/methodology/how-our-nfl-predictions-work/), FiveThirtyEight explain how they use an Elo based model for predicting the outcome of NFL games (a sport very similar to chess). Their model is such that:
+\begin{align}
+P_{win} = \frac{1}{1 + 10^{\frac{\mathrm{-EloDiff}}{400}}} \label{eq:elo} \tag{1}
+\end{align}
+As it is, this model assumes that the game is "fair", having both teams playing under equal circumstances. FiveThirtyEight then makes adjustments to the Elo of each team depending on other factors like if the team is playing at home or not, etc. Now, I cannot simply use this model because
+
+1. I don't happen to be a chess expert unfortunately, so I don't know by how much I should change the Elo of players if they have white pieces. This is precisely my first question.
+2. Equation $$\eqref{eq:elo}$$ tells me the Elo difference is being modelled as a logistic distribution (because the CDF is a logistic function). I don't know why this system has a problem with the Normal distribution, so I'll use a logistic distribution too just to be on the safe side. However, I doubt that $$\log(10)/400$$ would also be the right scale for Chess. So I will need to learn this from my model.
+3. And finally, it'd seem to me that the above model would predict a tie only when both teams have the same Elo score. Ties are way more frequent in FIDE games than they are in NFL (I guess not that similar after all), so to account for this I need to turn the logistic regression model into an **ordinal regression** model.
+
+That leaves me with the following model:
 
 \begin{align}
-P_{lose}(A) &= 1 - 1 / (1 + 10^{-(\alpha + E_A - E_B - c_1)/400}) \newline
-P_{draw}(A) &=  1 / (1 + 10^{-(\alpha + E_A - E_B - c_1)/400}) -   1 / (1 + 10^{-(\alpha + E_A - E_B - c_2)/400})\newline
-P_{win}(A) &= 1 / (1 + 10^{-(\alpha + E_A - E_B - c_2)/400}),
+P_{lose}(A) &= 1 - 1 / (1 + 10^{-(\alpha + E_A - E_B - c_1)/\sigma}) \newline
+P_{draw}(A) &=  1 / (1 + 10^{-(\alpha + E_A - E_B - c_1)/\sigma}) -   1 / (1 + 10^{-(\alpha + E_A - E_B - c_2)/\sigma})\newline
+P_{win}(A) &= 1 / (1 + 10^{-(\alpha + E_A - E_B - c_2)/\sigma})\label{eq:elo2} \tag{2},
 \end{align}
-where $$\alpha$$ is a term representing first move advantage and the cutpoints $$c_1$$ and $$c_2$$ help me to account for the 3 possible outcomes. This is an **ordinal regression model** (ordinal regression because each game can end in Lose, *Draw* or Win), in which the _effective_ elo difference is modeled with a logistic distribution.
+where $$\alpha$$ is a term representing first move advantage and the cutpoints $$c_1$$ and $$c_2$$ help me to account for the 3 possible outcomes.
 
-I'm going to fit this model in Stan (what else?). However, I'm not going to enforce the scale of my logistic distribution to be $$log(10)/400$$, I'll let my model learn the right scaling. If you are new to ordinal regression, I recommend you read [this post](https://betanalpha.github.io/assets/case_studies/ordinal_regression.html) before you carry on.
-
-The Stan code looks like this:
+## Ordinal regression in Stan
+I'm going to fit this model in Stan (what else?). The model code is quite simple and it looks like this:
 <div class="input_area" markdown="1">  
 
 ```c++
@@ -123,30 +141,67 @@ model {
     }
 }
 ```
+
 </div>
 
-The model is pretty simple, and perhaps the only remarkable aspect of it is the fact that I'm not using 2 independent parameters for the cutpoints but, instead, I make one the negative of the other. I do this because I want to enforce that any unbalance in the game is taken into account only by the first-move-advantage term.
+Perhaps the only remarkable aspect of it is the fact that I'm not using 2 independent parameters for the cutpoints but, instead, I make one the negative of the other. I do this because I want to enforce that any unbalance in the game is taken into account only by the first-move-advantage term.
 
-I fit the model using PyStan and I see that all my chains have mixed nicely on my first attempt[^1]
+To build the model, I first put the data in the right shape and then pass it to Stan. I will also use ArViz to visualize my chains:
+```python
+# 1: Lose, 2: Draw, 3: Win
+games["result_category"] = games.result.map({"0-1": 1, "1/2-1/2": 2, "1-0": 3})
+data = games \
+    .loc[:, ['white_elo', 'black_elo', 'result_category']] \
+    .dropna() \  # There's a player without Elo rating (Beth?)
+    .to_dict('list')
 
-<div class="input_area" markdown="1" style="font size: 10px">  
+data["n_games"] = len(data["white_elo"])
 
+with open("elo.stan", "r") as f:
+    model_code = f.read()
+
+model = stan.build(model_code, data=data)
+samples = model.sample(num_chains=4)
+inference_data = arviz.from_pystan(samples)
 ```
-Inference for Stan model: anon_model_5f684676ce3c9ea3dde56ce4f1a2ba1e.
-4 chains, each with iter=2000; warmup=1000; thin=1; 
-post-warmup draws per chain=1000, total post-warmup draws=4000.
 
-                  mean se_mean     sd   2.5%    25%    50%    75%  97.5%  n_eff   Rhat
-gap               1.31  6.5e-4   0.03   1.24   1.28   1.31   1.33   1.38   2867    1.0
-white_advantage   0.36  7.8e-4   0.04   0.28   0.33   0.36   0.39   0.45   3102    1.0
-scale           6.3e-3  7.2e-6 3.8e-4 5.6e-3 6.0e-3 6.3e-3 6.5e-3 7.0e-3   2708    1.0
-c[1]             -1.31  6.5e-4   0.03  -1.38  -1.33  -1.31  -1.28  -1.24   2867    1.0
-c[2]              1.31  6.5e-4   0.03   1.24   1.28   1.31   1.33   1.38   2867    1.0
-lp__             -2005    0.03   1.25  -2008  -2006  -2005  -2004  -2004   2017    1.0
-```
+Looking at the inference data I see that all my chains have mixed nicely on my first attempt[^1]
+
+![Trace plot](/assets/images/blog-images/2020-11-30-chess/traceplot.png)
+
+And the mean estimates of my parameters are:
+
+<div markdown="0" style="text-align: right">
+    <table border="0" class="dataframe">
+    <thead>
+        <tr style="text-align: center;">
+        <th>parameter</th>
+        <th>mean</th>
+        <th>std</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+        <th>white_advantage</th>
+        <td>0.366611</td>
+        <td>0.044193</td>
+        </tr>
+        <tr>
+        <th>scale</th>
+        <td>0.006281</td>
+        <td>0.000375</td>
+        </tr>
+        <tr>
+        <th>gap</th>
+        <td>1.307304</td>
+        <td>0.035150</td>
+        </tr>
+    </tbody>
+    </table>
 </div>
 
-According to this model, if you're playing white pieces against someone of the same Elo rating on a FIDE world cup, then
+
+So, according to this model, if you're playing white pieces against someone of the same Elo rating on a FIDE world cup, then
 
 \begin{align}
 P_{lose}(A) &= \mathrm{logit}^{-1}(-1.31)  &\approx 28\% \newline
@@ -161,92 +216,14 @@ P(win) = P(lose) &= \mathrm{logit}^{-1}(- 1.31)    &\approx 21\% \newline
 P(draw)          &= 2 * \mathrm{logit}^{-1}(-1.31) &\approx 58\%
 \end{align}
 
-This means that playing white pieces increases your chances of winning by 7%, and decreases your chances of losing by 5%.
+This means that **playing white pieces increases your chances of winning by 7%**, and decreases your chances of losing by 5%. To answer my second question I just need to plot equations $$\eqref{eq:elo2}$$ with the mean estimates. Here are my plots including the advantage for playing white pieces:
+
+![Elo curves](/assets/images/blog-images/2020-11-30-chess/elo_curves.png)
+
+
+These results look sensible to me given my very limited experience in chess world cups, so I'm going to call it a day. If you'd like to learn more about ordinal regression, I recommend you read [this post](https://betanalpha.github.io/assets/case_studies/ordinal_regression.html) by Mike Betancourt.
+
 
 [^1]: Maybe it was not my first attempt but you have no way of knowing that so...
-
-## Model 2: Constant Ability model.
-
-Inspired by [this example](https://statmodeling.stat.columbia.edu/2014/07/13/stan-analyzes-world-cup-data/) about a slightly more popular kind of world cup, I decided to write a model for estimating players abilities using Elo scores only as a prior. I have the problem however, that the Elo scores I have in my dataset have been evolving in time. Capturing that effect is more trouble than I'm in the mood for, though. So, I'm going to assume that player's abilities are constant in time. I knooooooow this is not the case in real life but whatever. That's my assumption for now, and I'll stick to it unless it proves to be a really bad idea (it won't). To validate this model, I'll leave out the games of the 2019 world cup as a hold out set.
-
-I'll use a partial pooling model, in which the _true_ players abilities are sampled from a common normal distribution. I will also take their average Elo score as a prior, to inform which side of the distribution each player is. So the model is
-
-\begin{align}
-\theta_i &= \mu + b E_i + \sigma \eta_i \newline
-y_{ij} &\sim \mathrm{OrderedLogistic}(\alpha + \theta_i - \theta_j \vert -c, +c) \newline
-\eta_i &\sim \mathrm{Normal}(0, 1)
-\end{align},
-where 
-* $$\theta_i$$ is the ability of player $$i$$;
-* $$\mu$$ is the mean ability of all players in the world cup. But since I'll only be comparing differences in abilities this term will be dropped in the actual model;
-* $$E_i$$ is the (standardized) Elo score of player $$i$$,
-* $$b$$ is a parameter to measure how important Elo scores are in determining the ability of each player;
-* $$\sigma$$ is the residual (how much of the player's ability is not explained by the other 2 terms);
-* The term $$\eta_i$$ is there because I'm using a non-centered parametrisation;
-* $$y_{ij}$$ is the outcome of the game betweeen players $$i$$ (white) and $$j$$ (black);
-* $$\alpha$$ is the first move advantage;
-* And the $$c_i$$ are the cutpoints.
-
-And I'm going to need some priors for all of this. I've chosen,
-\begin{align}
-b &\sim \mathrm{Normal}(0, 1),\newline
-\alpha &\sim \mathrm{Normal}(0, 1),\newline
-\sigma &\sim \mathrm{Student}_7(0, 2),\newline
-c &\sim \mathrm{Exponential}(1),\newline
-\end{align}
-
-Here the actual Stan code:
-<div class="input_area" markdown="1">  
-
-```c++
-data {
-    int n_games;
-    int n_players;
-    int result_category[n_games];
-    real first_elo_score[n_players];
-    int<lower=1, upper=n_players> black_id[n_games];
-    int<lower=1, upper=n_players> white_id[n_games];
-}
-
-transformed data {
-    real elo_zscore[n_players];
-    real mean_elo = mean(first_elo_score);
-    real sigma_elo = sd(first_elo_score);
-    for (n in 1:n_players) {
-        elo_zscore[n] = (first_elo_score[n] - mean_elo) / sigma_elo;
-    }
-}
-
-parameters {
-    real<lower=0> gap;
-    real white_advantage;
-    real elo_importance; 
-    real<lower=0> sigma;
-    real raw_ability[n_players];
-}
-
-transformed parameters {
-    ordered[2] c = to_vector({-gap, gap});
-    real ability[n_players];
-    for (p in 1:n_players) {
-        ability[p] = elo_importance * elo_zscore[p] + sigma * raw_ability[p];
-    }
-}
-
-model {
-    raw_ability ~ normal(0, 1);
-    gap ~ exponential(1);
-    sigma ~ student_t(7, 0, 2);  // Implicit Half Student
-    white_advantage ~ normal(0, 1);
-    elo_importance ~ normal(0, 1);
-    for (g in 1:n_games) {
-        result_category[g] ~ ordered_logistic(
-            white_advantage + ability[white_id[g]] - ability[black_id[g]],
-            c
-        );
-    }
-}
-```
-</div>
 
 
