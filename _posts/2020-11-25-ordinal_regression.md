@@ -204,9 +204,9 @@ And the mean estimates of my parameters are:
 So, according to this model, if you're playing white pieces against someone of the same Elo rating on a FIDE world cup, then
 
 \begin{align}
-P_{lose}(A) &= \mathrm{logit}^{-1}(-1.31)  &\approx 28\% \newline
+P_{win}(A) &= \mathrm{logit}^{-1}(0.36 - 1.31)  &\approx 28\% \newline
 P_{draw}(A) &= \mathrm{logit}^{-1}(0.36 + 1.31) - \mathrm{logit}^{-1}(0.36 - 1.31)  &\approx 56\% \newline
-P_{win}(A)  &=  1 - \mathrm{logit}^{-1}(0.36 + 1.31) &\approx 16\% 
+P_{lose}(A)  &=  1 - \mathrm{logit}^{-1}(0.36 + 1.31) &\approx 16\% 
 \end{align}
 
 And if chess were a fair game **without first move advantage** then we would have
