@@ -1,10 +1,7 @@
 ---
-layout: single
 title:  "Poisson regression in python"
-description: "A simple example on how to do Poisson regression using Python."
 date:   2020-05-19
 mathjax: true
-tags: [poisson regression, python, statistics]
 ---
 You tried to model count data using linear regression and it felt wrong. All your observations are integers and yet your model assumed continuous data. Noise seems to be larger when your observations take large values, but your model assumed the same amount of variance all across the board. Even worse, when your observations take small values, sometimes your model predicted negative values! So when no one else was watching you truncated your predictions at zero, `y_pred = max(0, y_pred)`. You have not slept since then.
 
@@ -18,80 +15,17 @@ I'll show you how to model the same example that is treated in chapter 6 of [thi
 ## Setup
 Start by importing the necessary libraries and the data.
 
-```python
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-import statsmodels.api as sm
-
-url = "http://www.stat.columbia.edu/~gelman/arm/examples/police/frisk_with_noise.dat" 
-df = pd.read_csv(url, skiprows=6, delimiter=" ")
-df.head()
-```
+<script src="https://gist.github.com/omarfsosa/a133eb01e1efa5deea962fae5d624e2a.js?file=blog__poisson_regression__01.py"></script>
 
 You should see a table like this:
-  <div markdown="0" style="text-align: right">
-    <table class="simpletable">
-      <thead>
-        <tr style="text-align: right;">
-          <th></th>
-          <th>stops</th>
-          <th>pop</th>
-          <th>past.arrests</th>
-          <th>precinct</th>
-          <th>eth</th>
-          <th>crime</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <th>0</th>
-          <td>75</td>
-          <td>1720</td>
-          <td>191</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-        </tr>
-        <tr>
-          <th>1</th>
-          <td>36</td>
-          <td>1720</td>
-          <td>57</td>
-          <td>1</td>
-          <td>1</td>
-          <td>2</td>
-        </tr>
-        <tr>
-          <th>2</th>
-          <td>74</td>
-          <td>1720</td>
-          <td>599</td>
-          <td>1</td>
-          <td>1</td>
-          <td>3</td>
-        </tr>
-        <tr>
-          <th>3</th>
-          <td>17</td>
-          <td>1720</td>
-          <td>133</td>
-          <td>1</td>
-          <td>1</td>
-          <td>4</td>
-        </tr>
-        <tr>
-          <th>4</th>
-          <td>37</td>
-          <td>1368</td>
-          <td>62</td>
-          <td>1</td>
-          <td>2</td>
-          <td>1</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+
+| stops  | pop   | past.arrests  | precinct | eth   | crime |
+| :----: |:----:| :--------:    |   :---:  | :---: | :-:   |
+| 75	| 1720	| 191	| 1	| 1	| 1 |
+| 36	| 1720	| 57	| 1	| 1	| 2 |
+| 74	| 1720	| 599	| 1	| 1	| 3 |
+| 17	| 1720	| 133	| 1	| 1	| 4 |
+| 37	| 1368	| 62	| 1	| 2	| 1 |
 
 The data consists of _stop and frisk data_ with noise added to protect confidentiality. This is important because it means that the estimates here will not reproduce the exact same results as in the book or the article. But the lessons of it remain true.
 Here's a quick description of the data.
@@ -123,22 +57,7 @@ In other words, the logarithm of the exposure plays the role of an offset term.
 
 As in the book, we are going to fit the model in 3 different ways. But before that, we need to put our data in the right shape.
 
-<div class="input_area" markdown="1">  
-
-```python
-X = (df
-    .groupby(['eth', 'precinct'])[["stops", "past.arrests"]]
-    .sum()
-    .reset_index()
-    .pipe(pd.get_dummies, columns=['eth', 'precinct'])
-    .assign(intercept=1)  # Adds a column called 'intercept' with all values equal to 1.
-    .sort_values(by='stops')
-    .reset_index(drop=True)
-)
-
-y = X.pop("stops")
-```
-</div>
+<script src="https://gist.github.com/omarfsosa/a133eb01e1efa5deea962fae5d624e2a.js?file=blog__poisson_regression__02.py"></script>
 
 Pretty neat, huh? I learned the above "trick" from a colleague, who in turn says he learned it from [this blog](https://tomaugspurger.github.io/method-chaining.html). Every processing step takes place in a separate line which makes it easier to read, and your code is not cluttered with multiple assignments to `X`. We added the column `intercept` because we will need to pass that explicitly to the `statsmodels.api` (this step would not be necessary if we were using the `statsmodels.formula.api` instead, but I'll not do that here).
 
@@ -151,19 +70,9 @@ y_i \sim \mathrm{Poisson}(\exp (\beta_0 + \log(u_i))).
 \end{align}
 
 If you are familiar with _scikit-learn_, pay attention to how the model here is fitted: the `fit` method does not operate in place but rather returns a new object storing the results.
-<div class="input_area" markdown="1">
 
-```python
-model_no_indicators = sm.GLM(
-    y,
-    X["intercept"],
-    offset=np.log(X["past.arrests"]),
-    family=sm.families.Poisson(),
-)
-result_no_indicators = model_no_indicators.fit()
-print(result_no_indicators.summary())
-```
-</div>
+<script src="https://gist.github.com/omarfsosa/a133eb01e1efa5deea962fae5d624e2a.js?file=blog__poisson_regression__03.py"></script>
+
 That should print the following output:
 
 <center>
@@ -192,16 +101,9 @@ That table contains a lot of information, but for this tutorial you want to pay 
 
 I know what you're thinking: _is that model any good?_. Let's plot the observed values vs the fitted values. The fitted values are conveniently stored in the `fittedvalues` attribute of the result.
 
-```python
-plt.plot(y, result_no_indicators.fittedvalues, 'o')
-plt.plot(y, y, '--', label='y = x')
-plt.ylabel("fitted value")
-plt.xlabel("observed value")
-plt.legend()
-plt.show()
-```
+<script src="https://gist.github.com/omarfsosa/a133eb01e1efa5deea962fae5d624e2a.js?file=blog__poisson_regression__04.py"></script>
 
-![Fitted vs observed values](/assets/images/blog-images/2020-05-18-generalised_linear_models/fitted_values_no_indicators.png)
+{% include image.html file='images/blog-images/2020-05-18-generalised_linear_models/fitted_values_no_indicators.png' %}
 
 Hmmmm... Perhaps not as bad as I would've expected for a 1 parameter model. Still, not the kind of model you bring home to meet your parents. Let's put some actual features into the model.
 
@@ -209,16 +111,7 @@ Hmmmm... Perhaps not as bad as I would've expected for a 1 parameter model. Stil
 
 We build on top of the previous model by first adding the ethnicity indicators. Note that we don't add the ethnicity indicator for black (1) because we use it as the baseline.
 
-```python
-model_with_ethnicity = sm.GLM(
-    y,
-    X[['intercept', 'eth_2', 'eth_3']],
-    offset=np.log(X["past.arrests"]),
-    family=sm.families.Poisson(),
-)
-result_with_ethnicity = model_with_ethnicity.fit()
-print(result_with_ethnicity.summary())
-```
+<script src="https://gist.github.com/omarfsosa/a133eb01e1efa5deea962fae5d624e2a.js?file=blog__poisson_regression__05.py"></script>
 
 <center>
 <div class="input_area" markdown="1" style="font-size: 14px;">
@@ -250,17 +143,7 @@ Adding the two ethnicity indicators as predictors decreased the deviance by 683 
 
 Finally, let's also control for precinct (we use `precinct_1` as the baseline).
 
-```python
-model_with_ethnicity_and_precinct = sm.GLM(
-    y,
-    X.drop(columns=["eth_1", "precinct_1", "past.arrests"]),
-    offset=np.log(X["past.arrests"]),
-    family=sm.families.Poisson(),
-)
-
-result_with_ethnicity_and_precinct = model_with_ethnicity_and_precinct.fit()
-print(result_with_ethnicity_and_precinct.summary())
-```
+<script src="https://gist.github.com/omarfsosa/a133eb01e1efa5deea962fae5d624e2a.js?file=blog__poisson_regression__06.py"></script>
 
 <center>
 <div class="input_area" markdown="1" style="font-size: 14px;">
@@ -297,28 +180,13 @@ Check out that massive decrease in the deviance -- precinct factors are definite
 
 With so many precincts, you might find it easier to see the estimated coefficients in a plot. Let's do that here.
 
-```python
-precinct_coefs = result_with_ethnicity_and_precinct.params.iloc[2:-1] # Only intersted in precinct
-precinct_interval = result_with_ethnicity_and_precinct.conf_int().reindex(precinct_coefs.index)
+<script src="https://gist.github.com/omarfsosa/a133eb01e1efa5deea962fae5d624e2a.js?file=blog__poisson_regression__07.py"></script>
 
-plt.figure(figsize=(15, 6))
-plt.plot(precinct_coefs, '.')
-for precinct, interval in precinct_interval.iterrows():
-    plt.plot([precinct, precinct], interval, color='C0')
-plt.axhline(y=0, linestyle=':', color='black')
-plt.xticks(
-    precinct_coefs.index[::3],
-    [int(x[1]) for x in precinct_coefs.index.str.split("_",)][::3]
-)
-plt.ylabel("Estimated coefficient")
-plt.xlabel("Precinct")
-plt.show()
-```
-![Estimated coefficients](/assets/images/blog-images/2020-05-18-generalised_linear_models/precinct_coefs.png)
+{% include image.html file='images/blog-images/2020-05-18-generalised_linear_models/precinct_coefs.png' %}
 
 So we see that most coefficients are significant. Finally, if you're not yet convinced that the precinct factors are good, compare the fitted values of this model vs the fitted values of the model that only uses ethnicity (code not shown):
 
-![Fitted values comparison](/assets/images/blog-images/2020-05-18-generalised_linear_models/fitted_values_comparison.png)
+{% include image.html file='images/blog-images/2020-05-18-generalised_linear_models/fitted_values_comparison.png' %}
 
 ## Overdispersed Poisson
 As you might have noticed, the Poisson distribution does not have independent paramter for the variance like, say, a normal distribution. Turns out that for the Poisson distribution, $$y\sim\mathrm{Poisson}(\lambda)$$, the variance is equal to the mean.
@@ -336,20 +204,9 @@ z_i & = \frac{y_i - \mu}{\sigma}\newline
 
 which not only should have mean at zero, but also standard deviation equal to $$1$$. The result of statsmodels conveniently stores the values of the residuals and standardized residuals in the attributes `resid_response` and `resid_pearson`, so this makes our life a bit simpler:
 
-```python
-f, axes = plt.subplots(1, 2, figsize=(17, 6))
-axes[0].plot(y, result_with_ethnicity_and_precinct.resid_response, 'o')
-axes[0].set_ylabel("Residuals")
-axes[0].set_xlabel("$y$")
-axes[1].plot(y, result_with_ethnicity_and_precinct.resid_pearson, 'o')
-axes[1].axhline(y=-1, linestyle=':', color='black', label='$\pm 1$')
-axes[1].axhline(y=+1, linestyle=':', color='black')
-axes[1].set_ylabel("Standardized residuals")
-axes[1].set_xlabel("$y$")
-plt.legend()
-plt.show()
-```
-![Residuals](/assets/images/blog-images/2020-05-18-generalised_linear_models/residuals.png)
+<script src="https://gist.github.com/omarfsosa/a133eb01e1efa5deea962fae5d624e2a.js?file=blog__poisson_regression__08.py"></script>
+
+{% include image.html file='images/blog-images/2020-05-18-generalised_linear_models/residuals.png' %}
 
 From the left plot, we see that the variance increases with the fitted values -- as expected from a Poisson distribution. But the if the data were well described by our Poisson model, 95% of the standardized residuals should lie within 2 standard deviations. This is obviously not the case. To quantify this, the number you should look at is the _overdispersion ratio_, $$R$$, which is 
 
@@ -359,10 +216,7 @@ R = \frac{1}{n - k}\sum_{i=1}^n z_i^2,
 
 where $$n-k$$ are the degrees of freedom of the residuals ($$n$$ is the number of observations and $$k$$ is the number of parameters you used to fit the model). If the data were Poisson, the sum of squares of the standardised residuals would follow a chi-square distribution with $$n-k$$ degrees of freedom, so we would expect $$R\approx 1$$. When $$R > 0$$, we say the data is overdispersed because there is extra variation in the data which is not captured by the Poisson model. When $$R < 1$$, we say the data is under-dispersed and we make sure to tell all of our friends about it because this is such a rare pokémon to find. You can easily compute the overdispersion ratio from the result:
 
-```python
-R = result_with_ethnicity_and_precinct.pearson_chi2 / result_with_ethnicity_and_precinct.df_resid
-print(R)  # 21.88
-```
+<script src="https://gist.github.com/omarfsosa/a133eb01e1efa5deea962fae5d624e2a.js?file=blog__poisson_regression__09.py"></script>
 
 Ok, so how do we account for overdispersion? There's more than one way to do it but, in any case, we are going to need an extra parameter in our model (just like a normal distribution has a parameter for the mean and one for the variance). Here, I'll do it using a negative binomial distribution instead of a Poisson. If $$y\sim \mathrm{NegBinomial}(\mu, \alpha)$$, then, according the parametrisation used by statsmodels library,
 
@@ -373,18 +227,8 @@ Ok, so how do we account for overdispersion? There's more than one way to do it 
 
 The parameter alpha is what helps us to specify the amount of overdispersion. So we simply fit a negative binomial model with a bit of overdisperssion, say $$\alpha=0.051$$, (below I explain how to choose this number):
 
-```python
-alpha = 0.051
-model_NB = sm.GLM(
-    y,
-    X.drop(columns=["eth_1", "precinct_1", "past.arrests"]),
-    offset=np.log(X["past.arrests"]),
-    family=sm.families.NegativeBinomial(alpha=alpha),
-)
+<script src="https://gist.github.com/omarfsosa/a133eb01e1efa5deea962fae5d624e2a.js?file=blog__poisson_regression__10.py"></script>
 
-result_NB = model_NB.fit()
-print(result_NB.summary())
-```
 <center>
 <div class="input_area" markdown="1" style="font-size: 14px;">
 ```plain
@@ -417,24 +261,13 @@ So after accounting for the overdispersion, the standard errors of our coefficie
 
 Now take a look at the residuals,
 
-![Residuals NB](/assets/images/blog-images/2020-05-18-generalised_linear_models/residuals_nb.png)
+{% include image.html file='images/blog-images/2020-05-18-generalised_linear_models/residuals_nb.png' %}
 
 that's more like it!
 
 Now, how did I choose $$\alpha = 0.0511$$. Turns out you can also fit this parameter from the data, but you have to use a different API.
 
-```python
-from statsmodels.discrete.discrete_model import NegativeBinomial
-
-nb = NegativeBinomial(
-    y,
-    X.drop(columns=["eth_1", "precinct_1", "past.arrests"]).values,
-    offset=np.log(X["past.arrests"].values),
-)
-
-result = nb.fit()
-print(result.summary())
-```
+<script src="https://gist.github.com/omarfsosa/a133eb01e1efa5deea962fae5d624e2a.js?file=blog__poisson_regression__11.py"></script>
 
 <center>
 <div class="input_area" markdown="1" style="font-size: 14px;">

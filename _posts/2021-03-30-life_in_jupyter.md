@@ -1,11 +1,7 @@
 ---
-layout: single
 title:  "Life in Jupyter"
-description: "5 actually useful tips"
 date:   2021-03-30
 mathjax: false
-plotly: false
-tags: [python, ipython, jupyter]
 ---
 
 I use jupyter notebooks in my work every single day. Every. Day. Over time, I've learnt a few good tricks that make my life a little better. I hope you too will find them useful.
@@ -21,7 +17,7 @@ Like with many editors, Jupyter lets you have multiple cursors within a single c
 
 [^1]: I'm a macos user. Sorry not sorry.
 
-![Comparison](/assets/images/blog-images/2021-03-30-life_in_jupyter/multicursor.gif)
+![Comparison](assets/static/images/blog-images/2021-03-30-life_in_jupyter/multicursor.gif)
 
 This is what's happening in the example above:
 
@@ -37,7 +33,6 @@ This is what's happening in the example above:
 10. I hit `esc` twice. Once to go back to single cursor. A second time to stop editing the cell.
 
 It might seem like a lot, but once you practice a bit it will become like a second nature and you won't even have to think about it.
-
 
 ### 3. Learn the keyboard shortcuts.
 
@@ -58,12 +53,12 @@ Here's the situation. After many iterations, the bit of code you wrote finally d
 
 Here. You're welcome.
 
-![Comparison](/assets/images/blog-images/2021-03-30-life_in_jupyter/underscore.png)
+![Comparison](assets/static/images/blog-images/2021-03-30-life_in_jupyter/underscore.png)
 
 
 Except that, maybe, you've already used the underscore to iterate over some obscure for-loop so the above trick doesn't quite work for you. Fear not:
 
-![Comparison](/assets/images/blog-images/2021-03-30-life_in_jupyter/out.png)
+![Comparison](assets/static/images/blog-images/2021-03-30-life_in_jupyter/out.png)
 
 
 ### 5. High resolution plots.
@@ -72,7 +67,7 @@ If you're already using `%matplotlib inline`, then simply add the magic `%config
 
 Low Resolution             |  High Resolution
 :-------------------------:|:-------------------------:
-![](/assets/images/blog-images/2021-03-30-life_in_jupyter/lores.png)  |  ![](/assets/images/blog-images/2021-03-30-life_in_jupyter/hires.png)
+![](assets/static/images/blog-images/2021-03-30-life_in_jupyter/lores.png)  |  ![](assets/static/images/blog-images/2021-03-30-life_in_jupyter/hires.png)
 
 
 Finally, make sure you pretend you've always known these things.

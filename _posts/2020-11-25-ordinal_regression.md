@@ -1,9 +1,7 @@
 ---
-layout: single
 title:  "A simple example of ordinal regression"
 date:   2020-11-25
 mathjax: true
-tags: [ordinal regression, stan, statistics, chess, elo]
 ---
 The Queen's Gambit came out and I binged the whole thing because, you know, that's what we do in the times of Covid. I really enjoyed it, actually, but once Beth Harmon was out of the way, the chess-stats questions started to flow. In particular, there were 2 scenes in this show that left me thinking (SPOILERS AHEAD!):
 
@@ -14,14 +12,8 @@ No doubt there's been tons of research about these questions already, and I bet 
 
 After dealing with some formatting issues, here's the data in the always-friendly csv format:
 
-```python
-import arviz
-import pandas as pd
-import stan  # PyStan 3
+<script src="https://gist.github.com/omarfsosa/f8753ac3a5199dd5205a062038c1daf5.js?file=blog__ordinal_regression__01.py"></script>
 
-games = pd.read_csv("../data/games.csv", parse_dates=["date"])
-games.head()
-```
 
 <div markdown="0" style="text-align: right">
     <table border="0" class="dataframe">
@@ -113,61 +105,18 @@ where $$\alpha$$ is a term representing first move advantage and the cutpoints $
 
 ## Ordinal regression in Stan
 I'm going to fit this model in Stan (what else?). The model code is quite simple and it looks like this:
-<div class="input_area" markdown="1">  
 
-```c++
-data {
-    int n_games;
-    int result_category[n_games]; // 1: Lose, 2: Draw, 3: Win
-    real white_elo[n_games];
-    real black_elo[n_games]; 
-}
-parameters {
-    real<lower=0> gap;
-    real<lower=0> white_advantage;
-    real<lower=0> scale;
-}
-
-transformed parameters {
-    ordered[2] c = to_vector({-gap, gap});
-}
-
-model {
-    gap ~ exponential(1);
-    white_advantage ~ exponential(1);
-    scale ~ std_normal(); // Implicit half normal
-    for (g in 1:n_games) {
-        result_category[g] ~ ordered_logistic(white_advantage + scale * (white_elo[g] - black_elo[g]), c);
-    }
-}
-```
-
-</div>
+<script src="https://gist.github.com/omarfsosa/f8753ac3a5199dd5205a062038c1daf5.js?file=blog__ordinal_regression__02.stan"></script>
 
 Perhaps the only remarkable aspect of it is the fact that I'm not using 2 independent parameters for the cutpoints but, instead, I make one the negative of the other. I do this because I want to enforce that any unbalance in the game is taken into account only by the first-move-advantage term.
 
 To build the model, I first put the data in the right shape and then pass it to Stan. I will also use ArViz to visualize my chains:
-```python
-# 1: Lose, 2: Draw, 3: Win
-games["result_category"] = games.result.map({"0-1": 1, "1/2-1/2": 2, "1-0": 3})
-data = games \
-    .loc[:, ['white_elo', 'black_elo', 'result_category']] \
-    .dropna() \  # There's a player without Elo rating (Beth?)
-    .to_dict('list')
 
-data["n_games"] = len(data["white_elo"])
-
-with open("elo.stan", "r") as f:
-    model_code = f.read()
-
-model = stan.build(model_code, data=data)
-samples = model.sample(num_chains=4)
-inference_data = arviz.from_pystan(samples)
-```
+<script src="https://gist.github.com/omarfsosa/f8753ac3a5199dd5205a062038c1daf5.js?file=blog__ordinal_regression__03.py"></script>
 
 Looking at the inference data I see that all my chains have mixed nicely on my first attempt[^1]
 
-![Trace plot](/assets/images/blog-images/2020-11-30-chess/traceplot.png)
+![Trace plot](assets/static/images/blog-images/2020-11-30-chess/traceplot.png)
 
 And the mean estimates of my parameters are:
 
@@ -218,7 +167,7 @@ P(draw)          &= 2 * \mathrm{logit}^{-1}(-1.31) &\approx 58\%
 
 This means that **playing white pieces increases your chances of winning by 7%**, and decreases your chances of losing by 5%. To answer my second question I just need to plot equations $$\eqref{eq:elo2}$$ with the mean estimates. Here are my plots including the advantage for playing white pieces:
 
-![Elo curves](/assets/images/blog-images/2020-11-30-chess/elo_curves.png)
+![Elo curves](assets/static/images/blog-images/2020-11-30-chess/elo_curves.png)
 
 
 These results look sensible to me given my very limited experience in chess world cups, so I'm going to call it a day. If you'd like to learn more about ordinal regression, I recommend you read [this post](https://betanalpha.github.io/assets/case_studies/ordinal_regression.html) by Mike Betancourt.
