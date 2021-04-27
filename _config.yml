@@ -7,7 +7,7 @@ logo_url:           https://avatars.githubusercontent.com/u/32113591?v=4 # Get i
 
 # Site Settings
 url:                https://omarfsosa.github.io # main url
-baseurl:            /omarfsosa
+baseurl:            
 permalink:          /:title # Post permalink
 timezone:           Europe/London # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 mathjax:            true  # enables support for mathjax - set to 'false' to disable
