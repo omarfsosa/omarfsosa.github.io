@@ -17,7 +17,7 @@ The plot might seem innocent at first but trust me, its place on the front cover
 
 But _more_ or _less_ compared to what? The average of course. The problem is that the average number of daily births is something that has changed over the years, it changes over the months and during the week. And these changes are complex, not easily captured with a simple model. The original paper addresses the question in a rather pedestrian way, using a frequentist ANOVA. If you want a rigorous Bayesian answer you will have to make it all the way to chapter 23 (out of 25) of the famous BDA3: **Gaussian processes**.
 
-Using a beefy Gaussian process the different components are extracted: the slow varying trend, the year seasonality, the weekly effect with slowly increasing magnitude, and the effect of every single day of the year. The effect of Valentine's Day and Halloween (and other special days) emerge:
+Using a beefy Gaussian process the different components are extracted: the slow varying trend, the year seasonality, the weekly effect with slowly increasing magnitude, and the effect of every single day of the year. The effects of Valentine's Day and Halloween (and other special days) emerge (see plot at the top).
 
 But the mathematical discussion behind this model hides a huuuuge caveat. Fitting a GP to this dataset (with roughly 7000 observations) would require computing the inverse of a `7000x7000` matrix -- and inverting it hundreds of times if we're doing full Bayes. That's just a no-go. So how on earth did they fit this model?
 
