@@ -12,6 +12,9 @@ Before my current role, I did a PhD at Durham University in the Department of Ma
 
 ### YouTube videos
 
+##### Tech talk on hierarchical modelling
+{% include youtube.html id="38yOWMMCeMk" %}
+
 ##### Tech talk on Bayesian Inference
 {% include youtube.html id="b_k_TXPiqnY" %}
 
