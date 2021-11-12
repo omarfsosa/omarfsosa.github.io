@@ -8,3 +8,5 @@ gem 'tzinfo'
 gem 'tzinfo-data'
 gem 'kramdown-parser-gfm'
 gem 'jekyll-remote-theme'
+
+gem "webrick", "~> 1.7"
