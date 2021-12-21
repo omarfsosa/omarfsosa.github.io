@@ -6,6 +6,35 @@ mathjax: true
 
 Flax is a deep learning library built on top of the already amazing Jax. Numpyro is a Bayesian inference library also built on top of Jax. This post will teach you how to combine Flax and Numpyro to obtain MCMC estimates for the parameters of a neural network. I’ll not discuss if Bayesian neural networks are a good idea.
 
+**Update**: The `random_flax_module` now available in Numpyro makes the whole process a lot easier, so that defining a custom potential energy function (the approach in this post)
+is no longer necessary. The syntax for defining a model with a bayesian neural network would be
+```python
+from numpyro.contrib.module import random_flax_module
+
+
+def model(n_obs, x, y=None):
+    mlp = random_flax_module(
+        "mlp",
+        MLP([5, 10, 1], (1,)),
+        prior={
+            "Dense_0.bias": dist.Cauchy(),
+            "Dense_0.kernel": dist.Normal(),
+            "Dense_1.bias": dist.Cauchy(),
+            "Dense_1.kernel": dist.Normal(),
+            "Dense_2.bias": dist.Cauchy(),
+            "Dense_2.kernel": dist.Normal(),
+        },
+        # Or, if using the same prior for all parameters, we can do:
+        #  prior=dist.Normal(),
+        input_shape=(1,),
+    )
+    sigma = numpyro.sample("sigma", dist.LogNormal())
+    with numpyro.plate("obs", n_obs):
+        mu = mlp(x).squeeze()
+        numpyro.sample("y", dist.Normal(mu, sigma), obs=y)
+```
+If for any reason, you still need to implement you own potential energy function. Then the material below might still be helpful.
+
 
 ### The problem
 Some [contributions](http://num.pyro.ai/en/stable/_modules/numpyro/contrib/module.html)
