@@ -76,7 +76,7 @@ mcmc = MCMC(kernel, **MCMC_KWARGS)
 
 Calling `NUTS` on the `linear_regression` model looks at the body of the function and builds a joint log-density for all the parameters in the model (here the parameters are alpha, beta, sigma). This joint density is then flipped upside down and used as potential energy for the chains in the sampler. But the NUTS sampler as implemented in Numpyro allows a second, alternative API - by passing your potential function directly.
 Let’s write the above model as a potential function. I will first write a quick, dirty implementation and I’ll later refine it into something that is easier to generalize.
-Remember, the potentialenergy is just the negative of the joint log-density.
+Remember, the potential energy is just the negative of the joint log-density.
 
 ```python
 def linear_regression_potential(parameters, x, y):
