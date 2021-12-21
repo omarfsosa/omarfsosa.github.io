@@ -1,6 +1,6 @@
 remote_theme:       heiswayi/the-plain
 # Site Info
-title:              "Spicy Research"
+title:              "Learning deep"
 description:        "Personal Logs"
 author_name:        "Omar Sosa"
 logo_url:           https://avatars.githubusercontent.com/u/32113591?v=4 # Get it from GitHub API: https://api.github.com/users/<username>
